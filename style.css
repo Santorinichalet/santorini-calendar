@@ -1,0 +1,263 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+    html, body {
+      font-family: 'Tajawal', sans-serif;
+      background: #ffffff;
+      margin: 0; padding: 0; height: 100%; overflow-x: hidden; color: #333;
+    }
+    .swiper { width: 100vw; height: 100vh; }
+    .swiper-slide {
+      width: 80%; max-width: 420px;
+      opacity: 0.3; transform: scale(0.9);
+      transition: all 0.4s ease;
+      box-sizing: border-box;
+      padding: 10px;
+    }
+    .swiper-slide-active {
+      opacity: 1; transform: scale(1);
+      z-index: 10;
+    }
+    .month-title {
+      font-size: 22px; font-weight: 700; margin: 12px 0 8px;
+      color: #024488; text-align: center; width: 100%; display: block;
+    }
+    .weekday-row {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      width: 100%; font-size: 13px; text-align: center;
+      color: #666; margin-bottom: 5px;
+    }
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 6px; width: 100%;
+    }
+    .day {
+      padding: 6px 0 24px; text-align: center;
+      background: #f0f0f0; border-radius: 10px;
+      cursor: pointer; font-size: 15px;
+      position: relative; overflow: visible;
+      transition: background 0.2s ease;
+      user-select: none;
+    }
+.day.empty {
+  background: #eaeaea;   /* لون رمادي واضح */
+  border-radius: 10px;
+  cursor: default;
+  box-shadow: none;
+  opacity: 0.6;
+  color: transparent;   /* إخفاء أي نص داخلي */
+  border: 1px solid #ddd;
+}
+
+
+
+    .day-number {
+      font-size: 15px; font-weight: normal;
+    }
+    .booking-line {
+      font-size: 12px; margin-top: 2px;
+      color: #444; user-select: none;
+      text-align: center;
+      font-weight: bold;
+    }
+    .booking-line.red { color: #b22222; } /* لون أحمر داكن */
+    .booking-line.orange { color: #007bff; }
+    .day.today {
+      border: 2px solid #007bff;
+      font-weight: bold; background: #e6f0ff;
+      color: #007bff;
+    }
+    .day:hover { background: #ddd; }
+
+    /* Popup styles */
+    .popup {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff; padding: 20px 25px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.15);
+      z-index: 9999; display: none;
+      width: 90%; max-width: 420px;
+      color: #333; box-sizing: border-box;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .popup h3 {
+      margin-top: 0; font-size: 20px; color: #007bff;
+      text-align: center;
+    }
+    .popup label {
+      font-weight: 600; margin-top: 12px;
+      display: block; color: #444;
+    }
+    .popup input[type=text],
+    .popup input[type=number],
+    .popup textarea,
+    .popup select {
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      width: 100%;
+      display: block;
+      margin-top: 4px;
+    }
+    input[type=checkbox] {
+      transform: scale(1.3);
+      margin-left: 8px;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    .popup button.action {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: background-color 0.3s ease;
+    }
+    .popup button.action:hover {
+      background: #218838;
+    }
+    .popup .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      font-size: 30px;
+      color: #888;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      width: 30px;
+      height: 30px;
+      text-align: center;
+    }
+    .close-btn:hover {
+      color: #333;
+    }
+
+    /* تعديل زر عرض بطاقة الحجز ليتناسب مع زر الحفظ ضمن مجموعة الأزرار */
+    .button-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .button-group .action {
+      flex: 1;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      cursor: pointer;
+      border: none;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+
+    .button-group .action.secondary {
+      background-color: #007bff;
+    }
+
+    .button-group .action.secondary:hover {
+      background-color: #0056b3;
+    }
+
+    .button-group .action:hover {
+      background-color: #218838;
+    }
+
+    /* زر عرض بطاقة الحجز مخفي بشكل افتراضي */
+    #showBookingCard {
+      display: none;
+    }
+
+    #goToToday {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 50px;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .month-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .month-buttons button {
+      background-color: #024488;
+      color: white;
+      padding: 10px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .month-buttons button:hover {
+      transform: scale(1.05);
+    }
+
+    /* Expenses list */
+    #expenseList {
+      margin-top: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      background: #fafafa;
+    }
+    #expenseList div {
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #ddd;
+    }
+    .logo-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .logo-container img {
+      width: 160px;
+      max-width: 90%;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease;
+    }
+
+    .logo-container img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+#bookingCardPopup img {
+  max-width: 100%;
+  width: 120px;
+  display: block;
+  margin: 0 auto;
+}
+
+  </style>
