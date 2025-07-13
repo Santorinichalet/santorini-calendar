@@ -1,117 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>تطبيق لانا شاليه</title>
-
-  // firebase-config.js
-
-  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-
-<link rel="stylesheet" href="style.css" />
-</head>
-<body>
-<div class="logo-container">
-  <img src="https://i.ibb.co/271BVWXd/Santorini-Logo.png" alt="Santorini-Logo" border="0">
-</div>
-
-
-  <div class="swiper">
-    <div class="swiper-wrapper" id="monthsContainer"></div>
-  </div>
-
-  <button id="goToToday">اليوم</button>
-
-  <!-- نافذة الحجز -->
-  <div class="popup" id="bookingPopup">
-    <button class="close-btn" onclick="closePopup('bookingPopup')">×</button>
-    <h3>تفاصيل الحجز</h3>
-    <label for="periodSelect">الفترة:</label>
-    <select id="periodSelect">
-      <option value="">اختر الفترة</option>
-      <option value="morning">صباح</option>
-      <option value="evening">مساء</option>
-      <option value="fullDay">يوم كامل</option>
-      <option value="overnight">مبيت</option>
-    </select>
-    <label for="timePeriod" id="timePeriodLabel" style="display:none;">الفترة الزمنية:</label>
-    <input type="text" id="timePeriod" placeholder="مثال: 8-12 ص أو 4-8 م" style="display:none;" />
-    <label for="status">نوع الحجز:</label>
-    <select id="status">
-      <option value="">اختر</option>
-      <option value="محجوز">محجوز</option>
-      <option value="عربون">عربون</option>
-      <option value="متاح">متاح</option>
-    </select>
-    <label for="amount">السعر:</label>
-    <input id="amount" type="number" placeholder="ريال عماني" />
-    <div class="deposit-group" id="depositGroup" style="display:none;">
-      <label for="deposit" style="font-weight: bold; color: #c00;">العربون:</label>
-      <input type="number" id="deposit" placeholder="ريال عماني" style="width: 80px; margin-left: 6px;" />
-      <span id="remaining" style="margin-left: 10px; font-weight: bold;"></span>
-    </div>
-    <hr style="margin: 20px 0;" />
-    <label for="guestName">اسم الضيف:</label>
-    <input type="text" id="guestName" placeholder="أدخل اسم الضيف" />
-    <label for="guestPhone">رقم الهاتف:</label>
-    <input type="text" id="guestPhone" placeholder="أدخل رقم الهاتف" />
-    <label for="notes">ملاحظات:</label>
-    <textarea id="notes" rows="2" placeholder="ملاحظات إضافية"></textarea>
-    <div class="button-group">
-      <button id="saveBooking" class="action">💾 حفظ</button>
-      <button id="showBookingCard" class="action secondary">🃏 عرض بطاقة الحجز</button>
-    </div>
-  </div>
-
-  <!-- بطاقة الحجز -->
-  <div class="popup" id="bookingCardPopup" style="max-width: 350px;">
-    <button class="close-btn" onclick="closePopup('bookingCardPopup')">×</button>
-    <img src="https://i.ibb.co/271BVWXd/Santorini-Logo.png" alt="Santorini-Logo" border="0">
-    <h3 style="text-align:center;">بطاقة الحجز</h3>
-    <div id="bookingCardContent" style="font-size: 14px; line-height: 1.4; direction: rtl;"></div>
-  </div>
-
-  <!-- نافذة المصروفات -->
-  <div class="popup" id="expensesPopup" style="max-width: 350px;">
-    <button class="close-btn" onclick="closePopup('expensesPopup')">×</button>
-    <h3>المصروفات</h3>
-    <label for="expenseTypeSelect">نوع المصروف:</label>
-    <select id="expenseTypeSelect" style="width: 100%; padding: 6px; font-size: 14px;">
-      <option value="" disabled selected>اختر نوع المصروف</option>
-      <option value="كهرباء">كهرباء</option>
-      <option value="ماء">ماء</option>
-      <option value="رواتب">رواتب</option>
-      <option value="تنظيف">تنظيف</option>
-      <option value="انترنت">انترنت</option>
-      <option value="صيانة">صيانة</option>
-      <option value="أخرى">أخرى</option>
-    </select>
-    <input type="text" id="expenseTypeInput" placeholder="أدخل نوع مصروف جديد" style="margin-top: 10px; display:none; width: 100%; padding: 6px; font-size: 14px;" />
-    <label for="expenseAmount">المبلغ:</label>
-    <input type="number" id="expenseAmount" placeholder="ريال عماني" />
-    <div style="display: flex; justify-content: space-between; gap: 10px;">
-      <button id="saveExpense" class="action" style="width: 48%;">حفظ</button>
-      <button id="deleteExpense" class="action" style="width: 48%; background: #dc3545;">حذف</button>
-    </div>
-    <div id="expenseList"></div>
-  </div>
-
-  <!-- نافذة التقرير -->
-  <div class="popup" id="reportPopup" style="max-width: 400px;">
-    <button class="close-btn" onclick="closePopup('reportPopup')">×</button>
-    <h3>التقرير حسب النطاق</h3>
-    <label for="reportFromDate">من:</label>
-    <input type="date" id="reportFromDate" value="2025-01-01" max="2025-12-31" />
-    <label for="reportToDate" style="margin-top: 12px;">إلى:</label>
-    <input type="date" id="reportToDate" value="2025-01-31" max="2025-12-31" />
-    <button id="generateReportBtn" class="action" style="width: 100%; margin-top: 15px;">عرض التقرير</button>
-    <div id="reportContent" style="font-size: 14px; line-height: 1.5; min-height: 120px; margin-top: 12px;"></div>
-  </div>
-
-<script type="module" src="app.js"></script>
-
-
-</body>
-</html>
