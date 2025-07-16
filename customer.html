@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حجز الشاليه</title>
+<script type="module" src="./firebase-config.js"></script>
+<script type="module">
+import { auth, db } from "./firebase-config.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const loginDiv = document.getElementById("login");
+const customerDiv = document.getElementById("customer");
+const chaletSelect = document.getElementById("chaletSelect");
+const bookingsDiv = document.getElementById("bookings");
+
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const logoutBtn = document.getElementById("logoutBtn");
+const bookForm = document.getElementById("bookForm");
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    loginDiv.style.display = "none";
+    customerDiv.style.display = "block";
+    loadChalets();
+  } else {
+    loginDiv.style.display = "block";
+    customerDiv.style.display = "none";
+  }
+});
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = loginForm.email.value;
+  const password = loginForm.password.value;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+registerForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = registerForm.email.value;
+  const password = registerForm.password.value;
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+logoutBtn.addEventListener("click", async () => {
+  await signOut(auth);
+});
+
+async function loadChalets() {
+  chaletSelect.innerHTML = "";
+  const snap = await getDocs(collection(db, "chalets"));
+  snap.forEach(doc => {
+    const opt = document.createElement("option");
+    opt.value = doc.id;
+    opt.textContent = doc.data().name;
+    chaletSelect.appendChild(opt);
+  });
+}
+
+bookForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const user = auth.currentUser;
+  const chaletId = chaletSelect.value;
+  const date = bookForm.date.value;
+  const period = bookForm.period.value;
+  const guestName = bookForm.guestName.value;
+  const guestPhone = bookForm.guestPhone.value;
+  const amount = bookForm.amount.value;
+  const deposit = bookForm.deposit.value;
+
+  if (!chaletId || !date || !period || !guestName || !amount || !deposit) {
+    alert("يرجى تعبئة جميع الحقول");
+    return;
+  }
+
+  await addDoc(collection(db, "bookings"), {
+    chaletId, date, period, guestName, guestPhone, amount: +amount, deposit: +deposit,
+    userId: user.uid,
+    status: "محجوز"
+  });
+
+  alert("تم الحجز بنجاح");
+  bookForm.reset();
+});
+</script>
+<style>
+body { font-family: Arial; padding: 20px; }
+#login, #customer { max-width: 400px; margin: auto; }
+</style>
+</head>
+<body>
+
+<div id="login">
+<h3>تسجيل دخول الزبائن</h3>
+<form id="loginForm">
+<input type="email" name="email" placeholder="الإيميل"><br>
+<input type="password" name="password" placeholder="كلمة المرور"><br>
+<button type="submit">دخول</button>
+</form>
+<hr>
+<form id="registerForm">
+<input type="email" name="email" placeholder="إيميل جديد"><br>
+<input type="password" name="password" placeholder="كلمة مرور"><br>
+<button type="submit">تسجيل جديد</button>
+</form>
+</div>
+
+<div id="customer" style="display:none">
+<h3>حجز شاليه</h3>
+<button id="logoutBtn">تسجيل خروج</button><br><br>
+
+<form id="bookForm">
+<select id="chaletSelect"></select><br><br>
+<input type="date" name="date"><br>
+<select name="period">
+  <option value="morning">صباح</option>
+  <option value="evening">مساء</option>
+  <option value="fullDay">يوم كامل</option>
+  <option value="overnight">مبيت</option>
+</select><br>
+<input type="text" name="guestName" placeholder="اسم الضيف"><br>
+<input type="text" name="guestPhone" placeholder="رقم الهاتف"><br>
+<input type="number" name="amount" placeholder="السعر"><br>
+<input type="number" name="deposit" placeholder="العربون"><br>
+<button type="submit">احجز الآن</button>
+</form>
+</div>
+
+</body>
+</html>
