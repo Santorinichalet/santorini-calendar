@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(function(registration) {
+            console.log('ServiceWorker مسجل:', registration);
+          }, function(err) {
+            console.log('فشل تسجيل ServiceWorker:', err);
+          });
+      });
+    }
+  </script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>تقويم حجز شاليه سانتوريني</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    * { font-family: 'Tajawal', sans-serif; }
+    body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to bottom right, #f5f5f5, #eaeaea);
+}
+body.rest1-bg {
+  background-image: url('https://i.ibb.co/nMndmjYX/Whats-App-Image-2025-06-20-at-6-12-26-PM.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: calc(100% - 20px);
+      max-width: 400px;
+      margin-bottom: 10px;
+    }
+    .controls button {
+      padding: 6px 12px;
+      font-size: 14px;
+      background-color: #20B2AA;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #monthLabel {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      width: calc(100% - 20px);
+      max-width: 400px;
+      margin-top: 10px;
+    }
+    .day {
+      background-color: #20B2AA;
+      color: white;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+      min-height: 90px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-number {
+      font-size: 18px;
+      padding-top: 5px;
+    }
+    .day .bar {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      background-color: #8B0000;
+      color: white;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 2px;
+    }
+    .bar1 { top: 30%; height: 20%; }
+    .bar2 { top: 50%; height: 20%; }
+    .bar3 { top: 70%; height: 20%; font-weight: bold; }
+    .full-red { background-color: darkred !important; }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      z-index: 9999;
+      width: 92%;
+      max-width: 360px;
+    }
+    .popup input, .popup select, .popup textarea {
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      font-size: 14px;
+    }
+    .popup label {
+      margin-top: 10px;
+      font-weight: bold;
+      display: block;
+    }
+    .popup button.save {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      background-color: #20B2AA;
+      color: white;
+      border: none;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #expensesButton {
+      font-size: 20px;
+      background-color: #FFA500;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+body.rest1-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.7); /* طبقة بيضاء شفافة */
+  z-index: -1;
+}
+body.rest2-bg {
+  background-image: url('https://i.ibb.co/qLn9MVQd/Whats-App-Image-2025-06-20-at-6-11-48-PM.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+body.rest2-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.7); /* طبقة بيضاء شفافة */
+  z-index: -1;
+}
+body.rest3-bg {
+  background-image: url('https://i.ibb.co/1J2s88NP/Whats-App-Image-2025-06-20-at-6-11-20-PM.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+body.rest3-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.7); /* طبقة بيضاء شفافة */
+  z-index: -1;
+}
+
+  </style>
+</head>
+<body>
+<!-- واجهة إعداد كلمة سر الأدمن -->
+<div id="adminSetup" style="display:none;position:fixed;inset:0;background:white;z-index:9999;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+  <h2>إنشاء كلمة سر الأدمن</h2>
+  <input type="password" id="newAdminPwd" placeholder="أدخل كلمة السر">
+  <button onclick="saveAdminPwd()">حفظ</button>
+</div>
+
+<!-- واجهة تسجيل دخول -->
+<div id="loginOverlay" style="display:none;position:fixed;inset:0;background:white;z-index:9998;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+  <h2>تسجيل الدخول</h2>
+  <select id="roleSelect">
+    <option value="user">مستخدم</option>
+    <option value="admin">أدمن</option>
+  </select>
+  <input type="password" id="passwordInput" placeholder="كلمة السر" />
+  <button onclick="checkLogin()">دخول</button>
+  <div id="loginError" style="color:red;margin-top:10px;"></div>
+</div>
+
+<!-- لوحة تحكم الأدمن -->
+<div id="adminPanel" style="display:none;position:fixed;top:10px;left:10px;background:white;border:1px solid #ccc;padding:10px;z-index:1000;">
+  <h3>لوحة تحكم الأدمن</h3>
+  <input type="password" id="newUserPwd" placeholder="كلمة سر المستخدم">
+  <button onclick="saveUserPwd()">حفظ كلمة سر المستخدم</button>
+  <button onclick="logout()">تسجيل خروج</button>
+</div>
+
+<div style="margin-bottom: 10px;">
+  <a href="https://ibb.co/vCHDtfQP" target="_blank">
+    <img src="https://i.ibb.co/tw43dnxs/1000760892.jpg" alt="شعار" style="max-width: 80px; height: auto; border-radius: 12px;">
+  </a>
+</div>
+<div style="margin-bottom: 10px; display: flex; gap: 10px;">
+  <button id="btn-rest1" onclick="switchRest('rest1')" style="padding: 6px 12px; background:#4682B4; color:white; border:none; border-radius:8px;">استراحة 1</button>
+  <button id="btn-rest2" onclick="switchRest('rest2')" style="padding: 6px 12px; background:#4682B4; color:white; border:none; border-radius:8px;">استراحة 2</button>
+  <button id="btn-rest3" onclick="switchRest('rest3')" style="padding: 6px 12px; background:#4682B4; color:white; border:none; border-radius:8px;">استراحة 3</button>
+</div>
+
+<div class="controls">
+  <button onclick="changeMonth(-1)">السابق</button>
+  <div id="monthLabel"></div>
+  <button onclick="changeMonth(1)">التالي</button>
+</div>
+<div class="days-row" style="display: grid; grid-template-columns: repeat(7, 1fr); width: calc(100% - 20px); max-width: 400px; text-align: center; font-weight: bold; margin-top: 10px;">
+  <div>الأحد</div>
+  <div>الإثنين</div>
+  <div>الثلاثاء</div>
+  <div>الأربعاء</div>
+  <div>الخميس</div>
+  <div>الجمعة</div>
+  <div>السبت</div>
+</div>
+<div class="calendar" id="calendar"></div>
+<div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
+  <button id="expensesButton" onclick="openExpenses()" style="font-size: 16px; background-color: #4682B4; color: white; padding: 10px 20px; border: none; border-radius: 12px; cursor: pointer;">
+    💰 المصروفات
+  </button>
+  <button id="reportButton" onclick="openReport()" style="font-size: 16px; background-color: #4682B4; color: white; padding: 10px 20px; border: none; border-radius: 12px; cursor: pointer;">
+    📊 التقارير
+  </button>
+</div>
+
+
+<div class="popup" id="expensesPopup">
+  <button onclick="document.getElementById('expensesPopup').style.display='none'"
+          style="position:absolute;top:10px;left:10px;background:#eee;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;">×</button>
+  <h3 style="text-align:center;">تسجيل مصروف</h3>
+  <label for="expenseType">نوع المصروف:</label>
+  <select id="expenseType" onchange="handleExpenseTypeChange()">
+    <option value="">-- اختر --</option>
+    <option value="كهرباء">كهرباء</option>
+    <option value="ماء">ماء</option>
+    <option value="رواتب">رواتب</option>
+    <option value="تنظيف">تنظيف</option>
+    <option value="انترنت">انترنت</option>
+    <option value="صيانة">صيانة</option>
+    <option value="أخرى">أخرى</option>
+  </select>
+  <div id="otherExpenseContainer" style="display:none;">
+    <label for="otherExpense">حدد نوع المصروف:</label>
+    <input type="text" id="otherExpense" placeholder="مثلاً: ضيافة"/>
+  </div>
+  <label for="expenseAmount">المبلغ:</label>
+  <input type="number" id="expenseAmount" placeholder="مثلاً: 10"/>
+<div style="display:flex; gap:10px; margin-top:10px;">
+  <button class="save" style="flex:1;" onclick="saveExpense()">حفظ</button>
+  <button class="save" style="flex:1; background:#b22222;" onclick="removeExpense()">حذف</button>
+</div>
+
+
+<div id="expenseList" style="margin-top:15px;"></div>
+<div id="totalExpense" style="margin-top:10px; font-weight:bold; text-align:center;"></div>
+</div>
+<div class="popup" id="reportPopup" style="display:none;">
+  <button onclick="document.getElementById('reportPopup').style.display='none'"
+          style="position:absolute;top:10px;left:10px;background:#eee;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;">×</button>
+  <h3 style="text-align:center;">التقارير</h3>
+<label for="reportStart">من تاريخ:</label>
+<input type="date" id="reportStart">
+
+<label for="reportEnd">إلى تاريخ:</label>
+<input type="date" id="reportEnd">
+
+  <button class="save" onclick="generateReport()">عرض التقرير</button>
+  <div id="reportResults" style="margin-top:15px;"></div>
+</div>
+<div class="popup" id="popup">
+  <button onclick="document.getElementById('popup').style.display='none'" style="position:absolute;top:10px;left:10px;background:#eee;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;">×</button>
+  <h3 style="text-align:center;">نافذة الحجز</h3>
+  <label>التوقيت حجز 1:</label>
+  <input type="text" id="from1" placeholder="مثلاً: 8-12">
+  <label>مبلغ حجز 1:</label>
+  <input type="text" id="amount1">
+  <label>التوقيت حجز 2:</label>
+  <input type="text" id="from2" placeholder="مثلاً: 4-8">
+  <label>مبلغ حجز 2:</label>
+  <input type="text" id="amount2">
+  <label>الإقامة:</label>
+  <select id="stay">
+    <option value="">بدون مبيت</option>
+    <option value="مبيت">مبيت</option>
+  </select>
+  <label>مبلغ المبيت:</label>
+  <input type="text" id="amount3">
+  <label>ملاحظات:</label>
+  <textarea id="note" placeholder="ملاحظات إضافية"></textarea>
+  <button class="save" onclick="saveBooking()">حفظ</button>
+</div>
+<div id="expenseList" style="margin-top:15px;"></div>
+<div id="totalExpense" style="margin-top:10px; font-weight:bold; text-align:center;"></div>
+
+</div>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyCG17oEvXw-B0MBkZPLaCBYncuIOwgrsOo",
+    authDomain: "test-f9621.firebaseapp.com",
+    projectId: "test-f9621"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let selectedDate = "";
+  let currentRest = localStorage.getItem("selectedRest") || "rest1";
+  let currentMonth = new Date().getMonth();
+  let currentYear = new Date().getFullYear();
+  const calendar = document.getElementById("calendar");
+
+  function updateMonthLabel() {
+    const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+    document.getElementById("monthLabel").textContent = `${monthNames[currentMonth]} ${currentYear}`;
+  }
+
+  function renderCalendar() {
+  updateMonthLabel();
+  calendar.innerHTML = "";
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+
+  for (let i = 0; i < firstDay; i++) {
+    calendar.appendChild(document.createElement("div"));
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = document.createElement("div");
+    cell.className = "day";
+    const dateId = `${currentYear}-${currentMonth + 1}-${d}`;
+    cell.innerHTML = `<div class='top-number'>${d}</div>`;
+
+    // ضع الخلية على التقويم الآن
+    calendar.appendChild(cell);
+
+    // أضف حدث النقر الآن
+    cell.addEventListener("click", () => openPopup(dateId));
+
+    // ثم اجلب البيانات من Firestore
+    db.collection('rests').doc(currentRest).collection('bookings').doc(dateId).get().then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+
+        if (data.from1) {
+          cell.innerHTML += `<div class='bar bar1'>${data.from1}</div>`;
+        }
+        if (data.from2) {
+          cell.innerHTML += `<div class='bar bar2'>${data.from2}</div>`;
+        }
+        if (data.stay && data.stay === 'مبيت') {
+          cell.innerHTML += `<div class='bar bar3'>مبيت</div>`;
+          cell.classList.add("full-red");
+        }
+      }
+    });
+  }
+}
+
+  function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    } else if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    renderCalendar();
+    updateExpenseList();
+  }
+
+  function openPopup(dateId) {
+    selectedDate = dateId;
+    db.collection('rests').doc(currentRest).collection('bookings').doc(dateId).get().then(doc => {
+      const data = doc.exists ? doc.data() : {};
+      document.getElementById("from1").value = data.from1 || "";
+      document.getElementById("amount1").value = data.amount1 || "";
+      document.getElementById("from2").value = data.from2 || "";
+      document.getElementById("amount2").value = data.amount2 || "";
+      document.getElementById("stay").value = data.stay || "";
+      document.getElementById("amount3").value = data.amount3 || "";
+      document.getElementById("note").value = data.note || "";
+      document.getElementById("popup").style.display = "block";
+    });
+  }
+
+  function saveBooking() {
+  const data = {
+    from1: document.getElementById("from1").value,
+    amount1: document.getElementById("amount1").value,
+    from2: document.getElementById("from2").value,
+    amount2: document.getElementById("amount2").value,
+    stay: document.getElementById("stay").value,
+    amount3: document.getElementById("amount3").value,
+    note: document.getElementById("note").value
+  };
+
+  db.collection('rests').doc(currentRest).collection('bookings').doc(selectedDate).set(data).then(() => {
+    renderCalendar();
+    document.getElementById("popup").style.display = "none"; // ← هذا السطر داخل الدالة الآن
+  });
+}
+
+
+  function handleExpenseTypeChange() {
+    const type = document.getElementById("expenseType").value;
+    const container = document.getElementById("otherExpenseContainer");
+    container.style.display = type === "أخرى" ? "block" : "none";
+  }
+
+function openExpenses() {
+  // أغلق نافذة التقارير إذا كانت مفتوحة
+  document.getElementById("reportPopup").style.display = "none";
+
+  // افتح نافذة المصروفات
+  document.getElementById("expensesPopup").style.display = "block";
+  updateExpenseList();
+}
+
+
+  function saveExpense() {
+    const year = currentYear;
+    const month = currentMonth + 1;
+
+
+    const type = document.getElementById("expenseType").value;
+    const other = document.getElementById("otherExpense").value;
+    const amount = parseFloat(document.getElementById("expenseAmount").value);
+
+    if (!type || !amount) {
+      alert("يرجى تعبئة نوع المصروف والمبلغ");
+      return;
+    }
+
+    const finalType = type === "أخرى" ? other : type;
+    const docRef = db.collection("rests").doc(currentRest).collection("expenses")
+                     .doc(`${year}-${month}`).collection("items").doc(finalType);
+
+    docRef.get().then(doc => {
+      const oldAmount = doc.exists ? parseFloat(doc.data().amount || 0) : 0;
+      const newAmount = oldAmount + amount;
+      docRef.set({ amount: newAmount });
+      alert("تم حفظ المصروف بنجاح");
+updateExpenseList();
+// document.getElementById("expensesPopup").style.display = "none";
+
+    });
+  }
+function removeExpense() {
+  const year = currentYear;
+  const month = currentMonth + 1;
+
+
+  const type = document.getElementById("expenseType").value;
+  const other = document.getElementById("otherExpense").value;
+  const amount = parseFloat(document.getElementById("expenseAmount").value);
+
+  if (!type || !amount) {
+    alert("يرجى تعبئة نوع المصروف والمبلغ");
+    return;
+  }
+
+  const finalType = type === "أخرى" ? other : type;
+  const docRef = db.collection("rests").doc(currentRest).collection("expenses")
+                   .doc(`${year}-${month}`).collection("items").doc(finalType);
+
+  docRef.get().then(doc => {
+    const oldAmount = doc.exists ? parseFloat(doc.data().amount || 0) : 0;
+    const newAmount = oldAmount - amount;
+    if (newAmount <= 0) {
+      docRef.delete();
+    } else {
+      docRef.set({ amount: newAmount });
+    }
+    alert("تم حذف المبلغ من المصروف بنجاح");
+updateExpenseList();
+// document.getElementById("expensesPopup").style.display = "none";
+
+  });
+}
+
+
+  function updateExpenseList() {
+  const year = currentYear;
+  const month = currentMonth + 1;
+  const listDiv = document.getElementById("expenseList");
+  const totalDiv = document.getElementById("totalExpense");
+
+  db.collection("rests").doc(currentRest).collection("expenses")
+    .doc(`${year}-${month}`).collection("items")
+    .get().then(snapshot => {
+      let total = 0;
+      let html = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const amount = parseFloat(data.amount || 0);
+        total += amount;
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+           <span>${doc.id}</span>
+           <span>${amount.toFixed(2)} ريال</span>
+         </div>`;
+
+      });
+      listDiv.innerHTML = html || "لا توجد مصروفات مسجلة.";
+      totalDiv.textContent = "المجموع: " + total.toFixed(2) + " ريال";
+    });
+}
+function deleteExpense(type) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const docRef = db.collection("rests").doc(currentRest).collection("expenses")
+                   .doc(`${year}-${month}`).collection("items").doc(type);
+
+  docRef.get().then(doc => {
+    if (doc.exists) {
+      const currentAmount = parseFloat(doc.data().amount || 0);
+      let amountToSubtract = parseFloat(prompt("كم تريد حذف من المبلغ؟", "0")) || 0;
+      if (amountToSubtract > currentAmount) {
+        alert("لا يمكن حذف مبلغ أكبر من المسجل.");
+        return;
+      }
+      const newAmount = currentAmount - amountToSubtract;
+      if (newAmount <= 0) {
+        docRef.delete();
+      } else {
+        docRef.set({ amount: newAmount });
+      }
+      updateExpenseList();
+    }
+  });
+}
+function switchRest(restId) {
+  currentRest = restId;
+  localStorage.setItem("selectedRest", restId);
+
+  document.body.classList.remove("rest1-bg", "rest2-bg", "rest3-bg");
+
+  if (restId === "rest1") {
+    document.body.classList.add("rest1-bg");
+  } else if (restId === "rest2") {
+    document.body.classList.add("rest2-bg");
+  } else if (restId === "rest3") {
+    document.body.classList.add("rest3-bg");
+  }
+
+  // تغيير لون الأزرار
+  document.getElementById("btn-rest1").style.backgroundColor = "#4682B4";
+  document.getElementById("btn-rest2").style.backgroundColor = "#4682B4";
+  document.getElementById("btn-rest3").style.backgroundColor = "#4682B4";
+
+  document.getElementById(`btn-${restId}`).style.backgroundColor = "#FF8C00"; // برتقالي مميز
+
+  renderCalendar();
+  updateExpenseList();
+}
+
+
+
+
+
+
+
+  window.changeMonth = changeMonth;
+  window.openPopup = openPopup;
+  window.saveBooking = saveBooking;
+  window.openExpenses = openExpenses;
+  window.handleExpenseTypeChange = handleExpenseTypeChange;
+  window.saveExpense = saveExpense;
+  window.deleteExpense = deleteExpense;
+  window.removeExpense = removeExpense;
+  window.openReport = openReport;
+  window.generateReport = generateReport;
+  window.switchRest = switchRest;
+
+  switchRest(currentRest);
+
+
+function openReport() {
+  // أغلق نافذة المصروفات إذا كانت مفتوحة
+  document.getElementById("expensesPopup").style.display = "none";
+
+  // افتح نافذة التقارير
+  document.getElementById("reportPopup").style.display = "block";
+}
+
+
+function generateReport() {
+  const startInput = document.getElementById("reportStart").value;
+  const endInput = document.getElementById("reportEnd").value;
+  const resultsDiv = document.getElementById("reportResults");
+
+  if (!startInput || !endInput) {
+    resultsDiv.innerHTML = "يرجى اختيار فترة صالحة.";
+    return;
+  }
+
+  const startParts = startInput.split("-");
+  const endParts = endInput.split("-");
+
+  const start = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
+  const end = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2]));
+
+  if (isNaN(start) || isNaN(end)) {
+    resultsDiv.innerHTML = "يرجى اختيار فترة صالحة.";
+    return;
+  }
+
+  let totalExpenses = 0;
+  let totalIncome = 0;
+  let bookedDays = 0;
+  const monthsToCheck = [];
+  const tempDate = new Date(start);
+
+  while (tempDate <= end) {
+    const y = tempDate.getFullYear();
+    const m = tempDate.getMonth() + 1;
+    const id = `${y}-${m}`;
+    if (!monthsToCheck.includes(id)) monthsToCheck.push(id);
+    tempDate.setMonth(tempDate.getMonth() + 1);
+  }
+
+  let expensesDone = 0;
+  let bookingsChecked = 0;
+  let totalBookingDocs = [];
+
+  // حساب المصروفات
+  monthsToCheck.forEach(monthId => {
+    db.collection("rests").doc(currentRest).collection("expenses")
+      .doc(monthId).collection("items")
+      .get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const amount = parseFloat(doc.data().amount || 0);
+          totalExpenses += amount;
+        });
+        expensesDone++;
+        if (expensesDone === monthsToCheck.length && bookingsChecked === totalBookingDocs.length) {
+          displayFinal();
+        }
+      });
+  });
+
+  // جمع الدخل وعدّ الأيام المحجوزة
+  const allDates = [];
+  const loopDate = new Date(start);
+  while (loopDate <= end) {
+    const y = loopDate.getFullYear();
+    const m = loopDate.getMonth() + 1;
+    const d = loopDate.getDate();
+    const id = `${y}-${m}-${d}`;
+    allDates.push(id);
+    loopDate.setDate(loopDate.getDate() + 1);
+  }
+
+  totalBookingDocs = allDates;
+
+  allDates.forEach(dateId => {
+    db.collection("rests").doc(currentRest).collection("bookings").doc(dateId)
+      .get().then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          const a1 = parseFloat(data.amount1 || 0);
+          const a2 = parseFloat(data.amount2 || 0);
+          const a3 = parseFloat(data.amount3 || 0);
+          if (a1 > 0) { totalIncome += a1; bookedDays++; }
+          if (a2 > 0) { totalIncome += a2; bookedDays++; }
+          if (a3 > 0) { totalIncome += a3; bookedDays++; }
+        }
+        bookingsChecked++;
+        if (expensesDone === monthsToCheck.length && bookingsChecked === totalBookingDocs.length) {
+          displayFinal();
+        }
+      });
+  });
+
+  function displayFinal() {
+    const profit = totalIncome - totalExpenses;
+    resultsDiv.innerHTML = `
+      <div><strong>عدد الأيام المحجوزة:</strong> ${bookedDays} يوم</div>
+      <div><strong>إجمالي الدخل:</strong> ${totalIncome.toFixed(2)} ريال</div>
+      <div><strong>إجمالي المصروفات:</strong> ${totalExpenses.toFixed(2)} ريال</div>
+      <hr>
+      <div><strong>صافي الربح:</strong> ${profit.toFixed(2)} ريال</div>
+    `;
+  }
+}
+
+
+
+
+
+})();
+</script>
+
+<button id="installBtn" style="position: fixed; bottom: 20px; right: 20px; background-color: #bfa16b; color: white; padding: 10px 20px; border: none; border-radius: 12px; font-size: 16px; z-index: 9999;">📲 تحميل التطبيق</button>
+
+
+<script>
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+  });
+
+  installBtn.addEventListener('click', () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(choice => {
+        if (choice.outcome === 'accepted') {
+          console.log('App installed');
+        }
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      });
+    } else {
+      alert("لتحميل التطبيق على iPhone، اضغط على زر المشاركة ثم 'إضافة إلى الشاشة الرئيسية'.");
+    }
+  });
+const db = firebase.firestore();
+
+function showAdminSetup() {
+  document.getElementById("adminSetup").style.display = "flex";
+}
+
+function showLogin() {
+  document.getElementById("loginOverlay").style.display = "flex";
+}
+
+
+
+function saveAdminPwd() {
+  const pwd = document.getElementById('newAdminPwd').value.trim();
+  if (!pwd) {
+    alert("أدخل كلمة السر");
+    return;
+  }
+  db.collection("roles").doc("admin").set({ password: pwd }).then(() => {
+    alert("تم إنشاء كلمة السر للأدمن");
+    document.getElementById("adminSetup").style.display = "none";
+    showLogin();
+  });
+}
+
+function checkLogin() {
+  const role = document.getElementById('roleSelect').value;
+  const pwd = document.getElementById('passwordInput').value.trim();
+
+  db.collection("roles").doc(role).get().then(doc => {
+    if (doc.exists) {
+      const correctPwd = doc.data().password;
+      if (pwd === correctPwd) {
+        localStorage.setItem("role", role);
+        document.getElementById("loginOverlay").style.display = "none";
+        if (role === "admin") {
+          document.getElementById("adminPanel").style.display = "block";
+        }
+switchRest(currentRest);
+      } else {
+        document.getElementById("loginError").textContent = "كلمة السر غير صحيحة";
+      }
+    } else {
+      document.getElementById("loginError").textContent = "الدور غير موجود";
+    }
+  }).catch(err => {
+    console.error(err);
+    document.getElementById("loginError").textContent = "خطأ في الاتصال";
+  });
+}
+
+function saveUserPwd() {
+  const pwd = document.getElementById('newUserPwd').value.trim();
+  if (!pwd) {
+    alert("أدخل كلمة السر");
+    return;
+  }
+  db.collection("roles").doc("user").set({ password: pwd }).then(() => {
+    alert("تم حفظ كلمة سر المستخدم");
+  });
+}
+
+function logout() {
+  localStorage.removeItem("role");
+  location.reload();
+}
+
+// تحقق عند تحميل الصفحة
+window.addEventListener("load", () => {
+  // هنا نعرف المتغير
+  const currentRest = localStorage.getItem("selectedRest") || "rest1";
+
+  const savedRole = localStorage.getItem("role");
+  if (savedRole) {
+    if (savedRole === "admin") {
+      document.getElementById("adminPanel").style.display = "block";
+    }
+    switchRest(currentRest);
+    return;
+  }
+
+  db.collection("roles").doc("admin").get().then(doc => {
+  console.log("doc.exists:", doc.exists, doc.data());
+  if (!doc.exists) {
+    showAdminSetup();
+  } else {
+    localStorage.setItem("role", "admin");
+    document.getElementById("adminPanel").style.display = "block";
+    switchRest(currentRest);
+  }
+});
+
+});
+
+
+
+
+  installBtn.style.display = 'none';
+</script>
+
+</body>
+</html>
