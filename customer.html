@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حجز شاليه</title>
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<script type="module" src="./firebase-config.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  padding: 0;
+}
+.header {
+  background-color: #003580;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  font-size: 1.2rem;
+}
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+#calendar {
+  max-width: 100%;
+}
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+}
+.modal-content {
+  background: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 8px;
+  position: relative;
+}
+.close {
+  position: absolute;
+  right: 10px; top: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+input, select, button {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+}
+button {
+  background: #003580;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:hover {
+  background: #0050b3;
+}
+</style>
+</head>
+
+<body>
+<div class="header">احجز شاليهك الآن</div>
+<div class="container">
+  <div id="calendar"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="bookingModal">
+  <div class="modal-content">
+    <span class="close" id="closeModal">&times;</span>
+    <h3>حجز يوم: <span id="selectedDate"></span></h3>
+    <form id="bookForm">
+      <input type="text" name="guestName" placeholder="اسم الضيف" required>
+      <input type="text" name="guestPhone" placeholder="رقم الهاتف" required>
+      <input type="number" name="amount" placeholder="السعر" required>
+      <input type="number" name="deposit" placeholder="العربون" required>
+      <select name="period">
+        <option value="صباح">صباح</option>
+        <option value="مساء">مساء</option>
+        <option value="يوم كامل">يوم كامل</option>
+        <option value="مبيت">مبيت</option>
+      </select>
+      <button type="submit">تأكيد الحجز</button>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase-config.js";
+import { addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const calendarEl = document.getElementById('calendar');
+const modal = document.getElementById('bookingModal');
+const closeModal = document.getElementById('closeModal');
+const selectedDateSpan = document.getElementById('selectedDate');
+const bookForm = document.getElementById('bookForm');
+
+let selectedDate = null;
+
+// إغلاق النافذة
+closeModal.onclick = () => modal.style.display = 'none';
+window.onclick = (e) => { if(e.target == modal) modal.style.display = 'none'; }
+
+function openModal(dateStr) {
+  selectedDate = dateStr;
+  selectedDateSpan.textContent = dateStr;
+  modal.style.display = 'block';
+}
+
+// تسجيل دخول مجهول
+onAuthStateChanged(auth, user => {
+  if (!user) signInAnonymously(auth);
+});
+
+bookForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(bookForm);
+  const data = Object.fromEntries(fd.entries());
+  data.date = selectedDate;
+  data.status = "محجوز";
+  data.amount = +data.amount;
+  data.deposit = +data.deposit;
+
+  await addDoc(collection(db, "bookings"), data);
+  alert("تم الحجز بنجاح!");
+  modal.style.display = 'none';
+  bookForm.reset();
+});
+
+const calendar = new FullCalendar.Calendar(calendarEl, {
+  initialView: 'dayGridMonth',
+  locale: 'ar',
+  headerToolbar: {
+    start: '',
+    center: 'title',
+    end: 'prev,next'
+  },
+  dateClick: function(info) {
+    openModal(info.dateStr);
+  }
+});
+
+calendar.render();
+</script>
+
+</body>
+</html>
