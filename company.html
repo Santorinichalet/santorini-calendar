@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة الشركة - طلبات الصيانة</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;
+      --card:#fff;
+      --text:#172033;
+      --muted:#6b7280;
+      --primary:#1f6feb;
+      --border:#e5e7eb;
+      --shadow:0 10px 24px rgba(0,0,0,.07);
+      --new:#fff4e5;
+      --progress:#e8f1ff;
+      --done:#ecfdf3;
+      --danger:#d92d20;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Tahoma, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .top{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:rgba(255,255,255,.92);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    .top-inner{
+      max-width:1200px;
+      margin:auto;
+      padding:16px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    h1{
+      margin:0;
+      font-size:26px;
+    }
+    .muted{
+      color:var(--muted);
+      font-size:14px;
+    }
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    input, select, button{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:11px 12px;
+      font-size:14px;
+      background:white;
+    }
+    button{
+      font-weight:700;
+      cursor:pointer;
+    }
+    .primary{
+      background:var(--primary);
+      color:white;
+      border-color:var(--primary);
+    }
+    .danger{
+      color:white;
+      background:var(--danger);
+      border-color:var(--danger);
+    }
+    .wrap{
+      max-width:1200px;
+      margin:20px auto;
+      padding:0 16px 24px;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .stat{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    .stat .num{
+      font-size:28px;
+      font-weight:800;
+      margin-top:8px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+      gap:16px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .card.new{background:linear-gradient(180deg,#fffdf8 0%, #fff 100%)}
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .title{
+      font-size:20px;
+      font-weight:800;
+      margin:0;
+    }
+    .tag{
+      font-size:13px;
+      font-weight:700;
+      padding:7px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .tag.new{background:var(--new)}
+    .tag.progress{background:var(--progress)}
+    .tag.done{background:var(--done)}
+    .details{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .box{
+      background:#fafbff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+    }
+    .box b{
+      display:block;
+      margin-bottom:6px;
+      font-size:13px;
+    }
+    .service{
+      line-height:1.9;
+      white-space:pre-wrap;
+    }
+    .photo{
+      width:100%;
+      max-height:260px;
+      object-fit:contain;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+    }
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .empty{
+      background:#fff;
+      border:1px dashed #cfd7e4;
+      border-radius:22px;
+      padding:30px;
+      text-align:center;
+      color:var(--muted);
+    }
+    @media (max-width:900px){
+      .stats{grid-template-columns:repeat(2,1fr)}
+    }
+    @media (max-width:600px){
+      .stats, .details{grid-template-columns:1fr}
+      .top-inner{align-items:flex-start}
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="top-inner">
+      <div>
+        <h1>لوحة الشركة</h1>
+        <div class="muted">عرض وإدارة طلبات الصيانة على شكل بطاقات</div>
+      </div>
+
+      <div class="controls">
+        <input id="searchInput" type="text" placeholder="بحث بالاسم أو الهاتف أو الخدمة" />
+        <select id="statusFilter">
+          <option value="الكل">كل الحالات</option>
+          <option value="جديد">جديد</option>
+          <option value="قيد التنفيذ">قيد التنفيذ</option>
+          <option value="مكتمل">مكتمل</option>
+        </select>
+        <button id="refreshBtn" class="primary">تحديث</button>
+        <button id="clearAllBtn" class="danger">حذف كل الطلبات</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><div>إجمالي الطلبات</div><div class="num" id="statAll">0</div></div>
+      <div class="stat"><div>جديد</div><div class="num" id="statNew">0</div></div>
+      <div class="stat"><div>قيد التنفيذ</div><div class="num" id="statProgress">0</div></div>
+      <div class="stat"><div>مكتمل</div><div class="num" id="statDone">0</div></div>
+    </div>
+
+    <div id="cardsContainer"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "maintenance_requests_v1";
+
+    const cardsContainer = document.getElementById("cardsContainer");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const clearAllBtn = document.getElementById("clearAllBtn");
+
+    function getRequests(){
+      try{
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      }catch(e){
+        return [];
+      }
+    }
+
+    function saveRequests(items){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function formatDate(iso){
+      const d = new Date(iso);
+      return d.toLocaleString('en-GB');
+    }
+
+    function getStatusClass(status){
+      if(status === "قيد التنفيذ") return "progress";
+      if(status === "مكتمل") return "done";
+      return "new";
+    }
+
+    function updateStats(data){
+      document.getElementById("statAll").textContent = data.length;
+      document.getElementById("statNew").textContent = data.filter(x=>x.status==="جديد").length;
+      document.getElementById("statProgress").textContent = data.filter(x=>x.status==="قيد التنفيذ").length;
+      document.getElementById("statDone").textContent = data.filter(x=>x.status==="مكتمل").length;
+    }
+
+    function render(){
+      const all = getRequests();
+      updateStats(all);
+
+      const q = searchInput.value.trim().toLowerCase();
+      const filter = statusFilter.value;
+
+      const filtered = all.filter(item=>{
+        const text = [
+          item.building, item.apartment, item.customerName, item.phone, item.service, item.status
+        ].join(" ").toLowerCase();
+
+        const matchText = !q || text.includes(q);
+        const matchStatus = filter === "الكل" || item.status === filter;
+        return matchText && matchStatus;
+      });
+
+      if(filtered.length === 0){
+        cardsContainer.innerHTML = '<div class="empty">لا توجد طلبات مطابقة حاليًا.</div>';
+        return;
+      }
+
+      cardsContainer.innerHTML = '<div class="grid">' + filtered.map(item=>`
+        <div class="card ${getStatusClass(item.status) === 'new' ? 'new' : ''}">
+          <div class="row">
+            <h3 class="title">${escapeHtml(item.building)} - شقة ${escapeHtml(item.apartment)}</h3>
+            <span class="tag ${getStatusClass(item.status)}">${escapeHtml(item.status)}</span>
+          </div>
+
+          <div class="details">
+            <div class="box">
+              <b>اسم العميل</b>
+              <div>${escapeHtml(item.customerName)}</div>
+            </div>
+            <div class="box">
+              <b>رقم الهاتف</b>
+              <div>${escapeHtml(item.phone)}</div>
+            </div>
+            <div class="box">
+              <b>تاريخ الطلب</b>
+              <div>${formatDate(item.createdAt)}</div>
+            </div>
+            <div class="box">
+              <b>رقم الطلب</b>
+              <div>${escapeHtml(item.id)}</div>
+            </div>
+            <div class="box">
+              <b>الوقت المناسب للتصليح</b>
+              <div>${escapeHtml(item.preferredTime || "-")}</div>
+            </div>
+            <div class="box" style="grid-column:1/-1">
+              <b>الخدمة المطلوبة</b>
+              <div class="service">${escapeHtml(item.service)}</div>
+            </div>
+          </div>
+
+          ${item.imageData ? `<img class="photo" src="${item.imageData}" alt="صورة مرفقة">` : ''}
+
+          <div class="actions">
+            <button onclick="changeStatus('${item.id}','جديد')">جديد</button>
+            <button onclick="changeStatus('${item.id}','قيد التنفيذ')">قيد التنفيذ</button>
+            <button onclick="changeStatus('${item.id}','مكتمل')">مكتمل</button>
+            <button class="danger" onclick="deleteRequest('${item.id}')">حذف</button>
+          </div>
+        </div>
+      `).join("") + '</div>';
+    }
+
+    function escapeHtml(text){
+      return String(text || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    window.changeStatus = function(id, status){
+      const items = getRequests().map(x=>x.id===id ? {...x, status} : x);
+      saveRequests(items);
+      render();
+    }
+
+    window.deleteRequest = function(id){
+      if(!confirm("هل تريد حذف هذا الطلب؟")) return;
+      const items = getRequests().filter(x=>x.id!==id);
+      saveRequests(items);
+      render();
+    }
+
+    refreshBtn.addEventListener("click", render);
+    searchInput.addEventListener("input", render);
+    statusFilter.addEventListener("change", render);
+
+    clearAllBtn.addEventListener("click", ()=>{
+      if(!confirm("سيتم حذف جميع الطلبات المحفوظة. هل تريد المتابعة؟")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      render();
+    });
+
+    window.addEventListener("storage", render);
+    render();
+  </script>
+</body>
+</html>
